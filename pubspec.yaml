@@ -38,6 +38,7 @@ dependencies:
   wear: ^1.1.0
   wearable_rotary: ^2.0.0
   intl: ^0.18.0
+  stop_watch_timer: ^2.0.0
 
 dev_dependencies:
   flutter_test:

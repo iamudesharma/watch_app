@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:stop_watch_timer/stop_watch_timer.dart';
 import 'package:wear/wear.dart';
 
 void main() {
@@ -13,6 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      themeMode: ThemeMode.dark,
       theme: ThemeData(
         visualDensity: VisualDensity.compact,
         useMaterial3: true, // use material 3
@@ -54,8 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
+  final raw = 3000; // 3sec
+
+  DateFormat dateFormat = DateFormat.Hms();
+
+  final stopWatchTimer =
+      StopWatchTimer(mode: StopWatchMode.countUp, presetMillisecond: 10);
+
   @override
   Widget build(BuildContext context) {
+    print('build');
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -67,32 +80,97 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (BuildContext context, WearShape shape, Widget? child) {
           return Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'Shape: ${shape == WearShape.round ? 'round' : 'square'}',
-                ),
                 child!,
               ],
             ),
           );
         },
-        child: AmbientMode(
-          onUpdate: () async {
-            await wear.setAutoResumeEnabled(true);
-            await wear.isAmbient().then((value) => print(value));
-            print('ambient mode updated');
-          },
-          builder: (BuildContext context, WearMode mode, Widget? child) {
-            return Column(
+        child: Column(
+          children: [
+            SizedBox(height: 10),
+            Text(
+              "Stopwatch",
+            ),
+            TimeWidget(dateFormat: dateFormat),
+            SizedBox(height: 10),
+            StreamBuilder<int>(
+              stream: stopWatchTimer.rawTime,
+              initialData: 0,
+              builder: (context, snap) {
+                final value = snap.data;
+                final displayTime = StopWatchTimer.getDisplayTime(value!);
+                return Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        displayTime,
+                        style: TextStyle(
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        value.toString(),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Helvetica',
+                            fontWeight: FontWeight.w400),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FlutterLogo(),
-                FlutterLogo(),
+                GestureDetector(
+                    onTap: () {
+                      stopWatchTimer.onStartTimer();
+                    },
+                    child: Icon(Icons.play_arrow)),
               ],
-            );
-          },
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class TimeWidget extends StatefulWidget {
+  const TimeWidget({
+    super.key,
+    required this.dateFormat,
+  });
+
+  final DateFormat dateFormat;
+
+  @override
+  State<TimeWidget> createState() => _TimeWidgetState();
+}
+
+class _TimeWidgetState extends State<TimeWidget> {
+  @override
+  void initState() {
+    super.initState();
+
+    Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {});
+    });
+  }
+
+  DateFormat dateFormat = DateFormat.Hms();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      dateFormat.format(DateTime.now().toLocal()),
     );
   }
 }
